@@ -86,6 +86,6 @@ public class Passenger {
 	}
 
 	public void setTicket(List<Ticket> ticket) {
-		this.tickets = tickets;
+		this.tickets = ticket;
 	}
 }

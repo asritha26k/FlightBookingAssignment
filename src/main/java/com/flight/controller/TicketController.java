@@ -23,7 +23,7 @@ public class TicketController {
 	@PostMapping("/api/v1.0/flight/booking/{f_id}")
 	public String bookTicket(@PathVariable int f_id, @Valid @RequestBody TicketBookingRequest req)
 			throws ResourceNotFoundException {
-		return ticketService.bookTick(f_id, req);
+		return ticketService.bookTicketService(f_id, req);
 
 	}
 

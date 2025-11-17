@@ -1,5 +1,6 @@
 package com.flight.service;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class TicketService {
 	@Autowired
 	FlightRepository flightRepo;
 
-	public String bookTick(int flight_id, TicketBookingRequest req) throws ResourceNotFoundException {
+	public String bookTicketService(int flight_id, TicketBookingRequest req) throws ResourceNotFoundException {
 		Passenger passenger = passRepo.findById(req.passenger_id).orElseThrow(
 				() -> new ResourceNotFoundException("Passenger with id " + req.passenger_id + " not found"));
 
@@ -41,6 +42,11 @@ public class TicketService {
 
 		String pnr = UUID.randomUUID().toString().substring(0, 8);
 		newTicket.setPnr(pnr);
+
+
+		if (passenger.getTicket() == null) {
+			passenger.setTicket(new ArrayList<>());
+		}
 
 		passenger.getTicket().add(newTicket);
 		ticketRepo.save(newTicket);
@@ -59,7 +65,9 @@ public class TicketService {
 		}
 
 		Passenger passenger = ticket.getPassenger();
-		passenger.getTicket().remove(ticket);
+		if (passenger.getTicket() != null) {
+			passenger.getTicket().remove(ticket);
+		}
 		ticketRepo.delete(ticket);
 
 		return "Deleted " + pnr;

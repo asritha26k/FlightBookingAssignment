@@ -85,4 +85,20 @@ public class Ticket {
 	public void setPassenger(Passenger passenger) {
 		this.passenger = passenger;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Ticket))
+			return false;
+		Ticket ticket = (Ticket) o;
+		return pnr != null && pnr.equals(ticket.getPnr());
+	}
+
+	@Override
+	public int hashCode() {
+		return pnr != null ? pnr.hashCode() : 0;
+	}
+
 }

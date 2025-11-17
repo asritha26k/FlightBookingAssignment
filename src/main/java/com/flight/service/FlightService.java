@@ -33,4 +33,12 @@ public class FlightService {
 		return flights;
 	}
 
+	public String deleteFlightService(int flightId) throws ResourceNotFoundException {
+		Flight flight = flightRepo.findById(flightId)
+				.orElseThrow(() -> new ResourceNotFoundException("Flight with id " + flightId + " not found"));
+
+		flightRepo.delete(flight);
+		return "Flight with id " + flightId + " deleted successfully";
+	}
+
 }

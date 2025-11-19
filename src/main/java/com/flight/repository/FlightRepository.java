@@ -13,4 +13,6 @@ public interface FlightRepository extends CrudRepository<Flight, Integer> {
 
 	List<Flight> findByOriginAndDestination(String origin, String destination);
 
+	List<Flight> findByflightId(int flightId);
+
 }

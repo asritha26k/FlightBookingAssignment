@@ -3,7 +3,6 @@ package com.test.flight.controller;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,7 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.flight.GlobalExceptionHandler;
 import com.flight.controller.FlightController;
 import com.flight.entity.Airline;
 import com.flight.entity.Flight;
@@ -51,7 +53,8 @@ class FlightControllerTest {
 		 * 1733049000 You get a readable date: "2025-12-01T10:30:00"
 		 * 
 		 */
-		mockMvc = MockMvcBuilders.standaloneSetup(flightController).build();
+		mockMvc = MockMvcBuilders.standaloneSetup(flightController).setControllerAdvice(new GlobalExceptionHandler())
+				.build();
 	}
 
 	public Flight createFlight() {
@@ -71,10 +74,11 @@ class FlightControllerTest {
 		Flight request = createFlight();
 		request.setFlightId(0);
 		Flight saved = createFlight();
-		when(flightService.addService(Mockito.any(Flight.class))).thenReturn(saved);
+		when(flightService.addService(Mockito.any(Flight.class)))
+				.thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(saved));
 
 		mockMvc.perform(post("/api/v1.0/flight/airline/inventory/add").contentType(MediaType.APPLICATION_JSON)
-				.content(mapper.writeValueAsString(request))).andExpect(status().isOk())
+				.content(mapper.writeValueAsString(request))).andExpect(status().isCreated())
 				.andExpect(jsonPath("$.flightId").value(1)).andExpect(jsonPath("$.origin").value("India"));
 		// post,contentType,content one set
 		// each andExpect is one set which contains json path and value check brackets!
@@ -85,7 +89,8 @@ class FlightControllerTest {
 	public void searchControllerTest() throws JsonProcessingException, Exception {
 		Flight request = createFlight();
 		List<Flight> flights = List.of(request);
-		when(flightService.searchService(Mockito.any(SearchReq.class))).thenReturn(flights);
+		when(flightService.searchService(Mockito.any(SearchReq.class)))
+				.thenReturn(ResponseEntity.status(HttpStatus.OK).body(flights));
 		SearchReq req = new SearchReq();
 		req.origin = "India";
 		req.destination = "Pakistan";
@@ -99,11 +104,12 @@ class FlightControllerTest {
 	@Test
 	public void deleteFlightControllerTest() throws Exception {
 
-		when(flightService.deleteFlightService(1)).thenReturn("Flight with id " + 1 + " deleted successfully");
+		when(flightService.deleteFlightService(1))
+				.thenReturn(ResponseEntity.status(HttpStatus.OK).body("Flight with id " + 1 + " deleted successfully"));
 
 		mockMvc.perform(delete("/api/v1.0/flight/airline/inventory/delete/{flightId}", 1)
 				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-				.andExpect(content().string("Flight with id 1 deleted successfully"));
+				.andExpect(jsonPath("$").value("Flight with id 1 deleted successfully"));
 	}
 
 }

@@ -18,12 +18,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import com.flight.entity.Flight;
 import com.flight.entity.Passenger;
 import com.flight.entity.Status;
 import com.flight.entity.Ticket;
 import com.flight.exception.ResourceNotFoundException;
+import com.flight.exception.ResourceNotFoundExceptionForResponseEntity;
 import com.flight.repository.FlightRepository;
 import com.flight.repository.PassengerRepository;
 import com.flight.repository.TicketRepository;
@@ -69,9 +71,9 @@ class TicketServiceTest {
 		when(flightRepo.findById(100)).thenReturn(Optional.of(flight));
 		when(ticketRepo.save(any(Ticket.class))).thenAnswer(i -> i.getArguments()[0]);
 
-		String pnr = ticketService.bookTicketService(100, request);
+		ResponseEntity<String> pnr = ticketService.bookTicketService(100, request);
 
-		assertNotNull(pnr);
+		assertNotNull(pnr.getBody());
 		assertEquals(1, passenger.getTicket().size());
 		assertEquals(Status.Booked, passenger.getTicket().get(0).getStatus());
 		verify(ticketRepo, times(1)).save(any(Ticket.class));
@@ -81,8 +83,8 @@ class TicketServiceTest {
 	void testBookTicketService_PassengerNotFound() {
 		when(passRepo.findById(1)).thenReturn(Optional.empty());
 
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-				() -> ticketService.bookTicketService(100, request));
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> ticketService.bookTicketService(100, request));
 
 		assertEquals("Passenger with id 1 not found", exception.getMessage());
 	}
@@ -92,8 +94,8 @@ class TicketServiceTest {
 		when(passRepo.findById(1)).thenReturn(Optional.of(passenger));
 		when(flightRepo.findById(100)).thenReturn(Optional.empty());
 
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-				() -> ticketService.bookTicketService(100, request));
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> ticketService.bookTicketService(100, request));
 
 		assertEquals("Flight with id 100 not found", exception.getMessage());
 	}
@@ -105,19 +107,19 @@ class TicketServiceTest {
 
 		when(ticketRepo.findByPnr("PNR12345")).thenReturn(Optional.of(ticket));
 
-		Ticket result = ticketService.getServiceDetails("PNR12345");
+		ResponseEntity<Ticket> result = ticketService.getServiceDetails("PNR12345");
 
 		assertNotNull(result);
-		assertEquals("PNR12345", result.getPnr());
+		assertEquals("PNR12345", result.getBody().getPnr());
 	}
 
 	@Test
-	void testGetServiceDetails_NotFound() throws ResourceNotFoundException {
+	void testGetServiceDetails_NotFound() throws ResourceNotFoundExceptionForResponseEntity {
 		when(ticketRepo.findByPnr("MISSING")).thenReturn(Optional.empty());
 
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-				() -> ticketService.getServiceDetails("MISSING"));
-		assertEquals(exception.getMessage(), "MISSING" + "this pnr details not found");
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> ticketService.getServiceDetails("MISSING"));
+		assertEquals(exception.getMessage(), "MISSING " + "this pnr details not found");
 	}
 
 	@Test
@@ -136,9 +138,9 @@ class TicketServiceTest {
 
 		when(ticketRepo.findByPnr("PNR12345")).thenReturn(Optional.of(ticket));
 
-		String result = ticketService.getDelete("PNR12345");
+		ResponseEntity<String> result = ticketService.getDelete("PNR12345");
 
-		assertEquals("Deleted PNR12345", result);
+		assertEquals("Deleted PNR12345", result.getBody());
 		assertTrue(localPassenger.getTicket().isEmpty());
 		verify(ticketRepo, times(1)).delete(ticket);
 
@@ -149,8 +151,8 @@ class TicketServiceTest {
 		String p = "PNR12345";
 		when(ticketRepo.findByPnr(p)).thenReturn(Optional.empty());
 
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-				() -> ticketService.getDelete("PNR12345"));
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> ticketService.getDelete("PNR12345"));
 
 		assertEquals(p + "this pnr details not found", exception.getMessage());
 	}

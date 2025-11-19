@@ -17,11 +17,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseEntity;
 
 import com.flight.entity.Address;
 import com.flight.entity.Passenger;
 import com.flight.entity.Ticket;
-import com.flight.exception.ResourceNotFoundException;
+import com.flight.exception.ResourceNotFoundExceptionForResponseEntity;
 import com.flight.repository.AddressRepository;
 import com.flight.repository.PassengerRepository;
 import com.flight.repository.TicketRepository;
@@ -73,17 +74,17 @@ public class PassengerServiceTest {
 
 		when(passRepo.save(any(Passenger.class))).thenReturn(passenger);
 
-		Passenger savedPassenger = passengerService.add(req);
+		ResponseEntity<Passenger> savedPassenger = passengerService.add(req);
 
-		assertEquals(req.name, savedPassenger.getName());
-		assertEquals(req.emailId, savedPassenger.getEmailId());
-		assertEquals(req.city, savedPassenger.getAddress().getCity());
+		assertEquals(req.name, savedPassenger.getBody().getName());
+		assertEquals(req.emailId, savedPassenger.getBody().getEmailId());
+		assertEquals(req.city, savedPassenger.getBody().getAddress().getCity());
 
 		verify(passRepo, times(1)).save(any(Passenger.class));
 	}
 
 	@Test
-	void testGetTicketsFound() throws ResourceNotFoundException {
+	void testGetTicketsFound() throws ResourceNotFoundExceptionForResponseEntity {
 		String email = "asritha@example.com";
 
 		Passenger passenger = new Passenger();
@@ -99,9 +100,9 @@ public class PassengerServiceTest {
 		when(passRepo.findByEmailId(email)).thenReturn(passenger);
 		when(tickRepo.findAllByPassenger_PassengerId(1)).thenReturn(tickets);
 
-		List<Ticket> result = passengerService.getTickets(email);
+		ResponseEntity<List<Ticket>> result = passengerService.getTickets(email);
 
-		assertEquals(2, result.size());
+		assertEquals(2, result.getBody().size());
 		verify(passRepo, times(1)).findByEmailId(email);
 		verify(tickRepo, times(1)).findAllByPassenger_PassengerId(1);
 	}
@@ -112,9 +113,10 @@ public class PassengerServiceTest {
 
 		when(passRepo.findByEmailId(email)).thenReturn(null);
 
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-			passengerService.getTickets(email);
-		});
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> {
+					passengerService.getTickets(email);
+				});
 
 		assertEquals("Passenger with email unknown@example.com not found", exception.getMessage());
 		verify(passRepo, times(1)).findByEmailId(email);

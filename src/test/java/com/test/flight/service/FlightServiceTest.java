@@ -15,10 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import com.flight.entity.Airline;
 import com.flight.entity.Flight;
 import com.flight.exception.ResourceNotFoundException;
+import com.flight.exception.ResourceNotFoundExceptionForResponseEntity;
 import com.flight.repository.FlightRepository;
 import com.flight.request.SearchReq;
 import com.flight.service.FlightService;
@@ -40,10 +42,9 @@ class FlightServiceTest {
 		input.setOrigin("india");
 		input.setDestination("pakistan");
 		when(flightRepo.save(input)).thenReturn(input);
-		Flight output = flightService.addService(input);
-		assertEquals(input, output);
+		ResponseEntity<Flight> output = flightService.addService(input);
+		assertEquals(input, output.getBody());
 		verify(flightRepo, times(1)).save(input);
-
 	}
 
 	@Test
@@ -62,22 +63,22 @@ class FlightServiceTest {
 		flights.add(input);
 		when(flightRepo.findByOriginAndDestination(searchReq.origin, searchReq.destination)).thenReturn(flights);
 
-		List<Flight> output = flightService.searchService(searchReq);
-		assertEquals(flights, output);
+		ResponseEntity<List<Flight>> output = flightService.searchService(searchReq);
+		assertEquals(flights, output.getBody());
 		verify(flightRepo, times(1)).findByOriginAndDestination(searchReq.origin, searchReq.destination);
 
 	}
 
 	@Test
-	public void testFailedSearchService() throws ResourceNotFoundException {
+	public void testFailedSearchService() throws ResourceNotFoundExceptionForResponseEntity {
 		SearchReq searchReq = new SearchReq();
 		searchReq.origin = "india";
 		searchReq.destination = "pakistan";
 		List<Flight> flights = new ArrayList<>();
 		when(flightRepo.findByOriginAndDestination(searchReq.origin, searchReq.destination)).thenReturn(flights);
 		// returning empty flight lists will throw error
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-				() -> flightService.searchService(searchReq));
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> flightService.searchService(searchReq));
 		assertEquals("No flights found from " + searchReq.origin + " to " + searchReq.destination,
 				exception.getMessage());
 
@@ -92,16 +93,16 @@ class FlightServiceTest {
 		input.setDestination("pakistan");
 
 		when(flightRepo.findById(1)).thenReturn(Optional.of(input));
-		assertEquals(flightService.deleteFlightService(1), "Flight with id " + 1 + " deleted successfully");
+		assertEquals(flightService.deleteFlightService(1).getBody(), "Flight with id " + 1 + " deleted successfully");
 		verify(flightRepo, times(1)).delete(input);
 
 	}
 
 	@Test
-	public void DeletionFailed() throws ResourceNotFoundException {
+	public void DeletionFailed() throws ResourceNotFoundExceptionForResponseEntity {
 		when(flightRepo.findById(1)).thenReturn(Optional.empty());
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-				() -> flightService.deleteFlightService(1));
+		ResourceNotFoundExceptionForResponseEntity exception = assertThrows(
+				ResourceNotFoundExceptionForResponseEntity.class, () -> flightService.deleteFlightService(1));
 
 	}
 

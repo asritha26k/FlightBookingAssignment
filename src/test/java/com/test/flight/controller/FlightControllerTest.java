@@ -1,6 +1,9 @@
 package com.test.flight.controller;
 
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -29,63 +33,77 @@ import com.flight.service.FlightService;
 
 @ExtendWith(MockitoExtension.class)
 class FlightControllerTest {
-
-	private MockMvc mockMvc;
-
+	MockMvc mockMvc; // layer that stimulates controller
 	@Mock
-	private FlightService flightService;
-
+	FlightService flightService;
 	@InjectMocks
-	private FlightController flightController;
-
-	private ObjectMapper mapper;
+	FlightController flightController;
+	ObjectMapper mapper;
 
 	@BeforeEach
-	void setup() {
+	void setUp() {
 		mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
+		mapper.registerModule(new JavaTimeModule());// Because Jackson (ObjectMapper) cannot automatically serialize or
+													// deserialize Java 8 date/time classes like:
 		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		/*
+		 * It forces Jackson to use ISO-8601 string format, not numbers. So instead of:
+		 * 1733049000 You get a readable date: "2025-12-01T10:30:00"
+		 * 
+		 */
 		mockMvc = MockMvcBuilders.standaloneSetup(flightController).build();
 	}
 
-	private Flight createFlight() {
-		Flight f = new Flight();
-		f.setFlightId(1);
-		f.setAirline(Airline.Indigo);
-		f.setOrigin("Bengaluru");
-		f.setDestination("Mumbai");
-		f.setPrice(2500.0);
-		f.setDepartureTime(LocalDateTime.of(2025, 12, 1, 10, 30));
-		f.setArrivalTime(LocalDateTime.of(2025, 12, 1, 12, 0));
-		return f;
+	public Flight createFlight() {
+		Flight flight = new Flight();
+		flight.setFlightId(1);
+		flight.setOrigin("India");
+		flight.setDestination("Pakistan");
+		flight.setPrice(200);
+		flight.setDepartureTime(LocalDateTime.of(2025, 12, 1, 10, 30));
+		flight.setArrivalTime(LocalDateTime.of(2025, 12, 1, 12, 0));
+		flight.setAirline(Airline.Emirates);
+		return flight;
 	}
 
 	@Test
-	void addFlight_Success() throws Exception {
+	public void addControllerTest() throws JsonProcessingException, Exception {
 		Flight request = createFlight();
 		request.setFlightId(0);
 		Flight saved = createFlight();
-
-		Mockito.when(flightService.addService(Mockito.any(Flight.class))).thenReturn(saved);
+		when(flightService.addService(Mockito.any(Flight.class))).thenReturn(saved);
 
 		mockMvc.perform(post("/api/v1.0/flight/airline/inventory/add").contentType(MediaType.APPLICATION_JSON)
 				.content(mapper.writeValueAsString(request))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.flightId").value(1)).andExpect(jsonPath("$.origin").value("Bengaluru"))
-				.andExpect(jsonPath("$.destination").value("Mumbai"));
+				.andExpect(jsonPath("$.flightId").value(1)).andExpect(jsonPath("$.origin").value("India"));
+		// post,contentType,content one set
+		// each andExpect is one set which contains json path and value check brackets!
+
 	}
 
 	@Test
-	void searchFlight_Success() throws Exception {
+	public void searchControllerTest() throws JsonProcessingException, Exception {
+		Flight request = createFlight();
+		List<Flight> flights = List.of(request);
+		when(flightService.searchService(Mockito.any(SearchReq.class))).thenReturn(flights);
 		SearchReq req = new SearchReq();
-		req.origin = "Bengaluru";
-		req.destination = "Mumbai";
-
-		Mockito.when(flightService.searchService(Mockito.any(SearchReq.class))).thenReturn(List.of(createFlight()));
+		req.origin = "India";
+		req.destination = "Pakistan";
 
 		mockMvc.perform(post("/api/v1.0/flight/search").contentType(MediaType.APPLICATION_JSON)
 				.content(mapper.writeValueAsString(req))).andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].origin").value("Bengaluru"))
-				.andExpect(jsonPath("$[0].destination").value("Mumbai"));
+				.andExpect(jsonPath("$[0].flightId").value(1));
+
+	}
+
+	@Test
+	public void deleteFlightControllerTest() throws Exception {
+
+		when(flightService.deleteFlightService(1)).thenReturn("Flight with id " + 1 + " deleted successfully");
+
+		mockMvc.perform(delete("/api/v1.0/flight/airline/inventory/delete/{flightId}", 1)
+				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(content().string("Flight with id 1 deleted successfully"));
 	}
 
 }

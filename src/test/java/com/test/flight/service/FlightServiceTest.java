@@ -8,84 +8,101 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.flight.entity.Airline;
 import com.flight.entity.Flight;
 import com.flight.exception.ResourceNotFoundException;
 import com.flight.repository.FlightRepository;
 import com.flight.request.SearchReq;
 import com.flight.service.FlightService;
 
-public class FlightServiceTest {
+@ExtendWith(MockitoExtension.class)
+class FlightServiceTest {
 
 	@Mock
-	private FlightRepository flightRepo;
+	FlightRepository flightRepo;
 
 	@InjectMocks
-	private FlightService flightService; // note: matches the service class
+	FlightService flightService;
 
-	@BeforeEach
-	void setUp() {
-		MockitoAnnotations.openMocks(this);
+	@Test
+	public void testAddService() throws ResourceNotFoundException {
+		Flight input = new Flight();
+		input.setAirline(Airline.Emirates);
+		input.setFlightId(1);
+		input.setOrigin("india");
+		input.setDestination("pakistan");
+		when(flightRepo.save(input)).thenReturn(input);
+		Flight output = flightService.addService(input);
+		assertEquals(input, output);
+		verify(flightRepo, times(1)).save(input);
+
 	}
 
 	@Test
-	void testAddService() {
-		Flight flight = new Flight();
-		flight.setFlightId(1);
-		flight.setOrigin("DEL");
-		flight.setDestination("BOM");
+	public void testSearchService() throws ResourceNotFoundException {
+		SearchReq searchReq = new SearchReq();
+		searchReq.origin = "india";
+		searchReq.destination = "pakistan";
+		List<Flight> flights = new ArrayList<>();
 
-		when(flightRepo.save(flight)).thenReturn(flight);
+		Flight input = new Flight();
+		input.setAirline(Airline.Emirates);
+		input.setFlightId(1);
+		input.setOrigin("india");
+		input.setDestination("pakistan");
 
-		Flight saved = flightService.addService(flight);
-		assertEquals(flight, saved);
+		flights.add(input);
+		when(flightRepo.findByOriginAndDestination(searchReq.origin, searchReq.destination)).thenReturn(flights);
 
-		verify(flightRepo, times(1)).save(flight);
+		List<Flight> output = flightService.searchService(searchReq);
+		assertEquals(flights, output);
+		verify(flightRepo, times(1)).findByOriginAndDestination(searchReq.origin, searchReq.destination);
+
 	}
 
 	@Test
-	void testSearchServiceFound() throws ResourceNotFoundException {
-		SearchReq req = new SearchReq();
-		req.origin = "DEL";
-		req.destination = "BOM";
+	public void testFailedSearchService() throws ResourceNotFoundException {
+		SearchReq searchReq = new SearchReq();
+		searchReq.origin = "india";
+		searchReq.destination = "pakistan";
+		List<Flight> flights = new ArrayList<>();
+		when(flightRepo.findByOriginAndDestination(searchReq.origin, searchReq.destination)).thenReturn(flights);
+		// returning empty flight lists will throw error
+		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+				() -> flightService.searchService(searchReq));
+		assertEquals("No flights found from " + searchReq.origin + " to " + searchReq.destination,
+				exception.getMessage());
 
-		List<Flight> flightList = new ArrayList<>();
-		Flight flight = new Flight();
-		flight.setFlightId(1);
-		flight.setOrigin("DEL");
-		flight.setDestination("BOM");
-		flightList.add(flight);
-
-		when(flightRepo.findByOriginAndDestination("DEL", "BOM")).thenReturn(flightList);
-
-		List<Flight> result = flightService.searchService(req);
-
-		assertEquals(1, result.size());
-		assertEquals("DEL", result.get(0).getOrigin());
-		assertEquals("BOM", result.get(0).getDestination());
-
-		verify(flightRepo, times(1)).findByOriginAndDestination("DEL", "BOM");
 	}
 
 	@Test
-	void testSearchServiceNotFound() {
-		SearchReq req = new SearchReq();
-		req.origin = "DEL";
-		req.destination = "NYC";
+	public void Deletion() throws ResourceNotFoundException {
+		Flight input = new Flight();
+		input.setAirline(Airline.Emirates);
+		input.setFlightId(1);
+		input.setOrigin("india");
+		input.setDestination("pakistan");
 
-		when(flightRepo.findByOriginAndDestination("DEL", "NYC")).thenReturn(new ArrayList<>());
+		when(flightRepo.findById(1)).thenReturn(Optional.of(input));
+		assertEquals(flightService.deleteFlightService(1), "Flight with id " + 1 + " deleted successfully");
+		verify(flightRepo, times(1)).delete(input);
 
-		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-			flightService.searchService(req);
-		});
-
-		assertEquals("No flights found from DEL to NYC", exception.getMessage());
-		verify(flightRepo, times(1)).findByOriginAndDestination("DEL", "NYC");
 	}
+
+	@Test
+	public void DeletionFailed() throws ResourceNotFoundException {
+		when(flightRepo.findById(1)).thenReturn(Optional.empty());
+		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+				() -> flightService.deleteFlightService(1));
+
+	}
+
 }

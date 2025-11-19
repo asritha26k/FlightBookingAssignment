@@ -1,22 +1,22 @@
 package com.test.flight.service;
 
-import java.util.ArrayList;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.flight.entity.Flight;
@@ -99,11 +99,11 @@ class TicketServiceTest {
 	}
 
 	@Test
-	void testGetServiceDetails() {
+	void testGetServiceDetails() throws ResourceNotFoundException {
 		Ticket ticket = new Ticket();
 		ticket.setPnr("PNR12345");
 
-		when(ticketRepo.findByPnr("PNR12345")).thenReturn(ticket);
+		when(ticketRepo.findByPnr("PNR12345")).thenReturn(Optional.of(ticket));
 
 		Ticket result = ticketService.getServiceDetails("PNR12345");
 
@@ -112,12 +112,12 @@ class TicketServiceTest {
 	}
 
 	@Test
-	void testGetServiceDetails_NotFound() {
-		when(ticketRepo.findByPnr("MISSING")).thenReturn(null);
+	void testGetServiceDetails_NotFound() throws ResourceNotFoundException {
+		when(ticketRepo.findByPnr("MISSING")).thenReturn(Optional.empty());
 
-		Ticket result = ticketService.getServiceDetails("MISSING");
-
-		assertNull(result);
+		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+				() -> ticketService.getServiceDetails("MISSING"));
+		assertEquals(exception.getMessage(), "MISSING" + "this pnr details not found");
 	}
 
 	@Test
@@ -134,7 +134,7 @@ class TicketServiceTest {
 
 		localPassenger.getTicket().add(ticket);
 
-		when(ticketRepo.findByPnr("PNR12345")).thenReturn(ticket);
+		when(ticketRepo.findByPnr("PNR12345")).thenReturn(Optional.of(ticket));
 
 		String result = ticketService.getDelete("PNR12345");
 
@@ -146,11 +146,12 @@ class TicketServiceTest {
 
 	@Test
 	void testGetDelete_TicketNotFound() {
-		when(ticketRepo.findByPnr("PNR12345")).thenReturn(null);
+		String p = "PNR12345";
+		when(ticketRepo.findByPnr(p)).thenReturn(Optional.empty());
 
 		ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
 				() -> ticketService.getDelete("PNR12345"));
 
-		assertEquals("Ticket with PNR PNR12345 not found", exception.getMessage());
+		assertEquals(p + "this pnr details not found", exception.getMessage());
 	}
 }

@@ -28,7 +28,7 @@ public class TicketController {
 	}
 
 	@GetMapping("/api/v1.0/flight/ticket/{pnr}")
-	public Ticket getDetails(@PathVariable String pnr) {
+	public Ticket getDetails(@PathVariable String pnr) throws ResourceNotFoundException {
 		return ticketService.getServiceDetails(pnr);
 	}
 

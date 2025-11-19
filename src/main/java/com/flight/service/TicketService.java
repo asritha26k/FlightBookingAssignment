@@ -43,7 +43,6 @@ public class TicketService {
 		String pnr = UUID.randomUUID().toString().substring(0, 8);
 		newTicket.setPnr(pnr);
 
-
 		if (passenger.getTicket() == null) {
 			passenger.setTicket(new ArrayList<>());
 		}
@@ -54,16 +53,17 @@ public class TicketService {
 		return pnr;
 	}
 
-	public Ticket getServiceDetails(String pnr) {
-		return ticketRepo.findByPnr(pnr);
+	public Ticket getServiceDetails(String pnr) throws ResourceNotFoundException {
+
+		return ticketRepo.findByPnr(pnr)
+				.orElseThrow(() -> new ResourceNotFoundException(pnr + "this pnr details not found"));
 	}
 
 	public String getDelete(String pnr) throws ResourceNotFoundException {
-		Ticket ticket = ticketRepo.findByPnr(pnr);
-		if (ticket == null) {
-			throw new ResourceNotFoundException("Ticket with PNR " + pnr + " not found");
-		}
-
+		Ticket ticket = ticketRepo.findByPnr(pnr)
+				.orElseThrow(() -> new ResourceNotFoundException(pnr + "this pnr details not found"));
+		;
+		
 		Passenger passenger = ticket.getPassenger();
 		if (passenger.getTicket() != null) {
 			passenger.getTicket().remove(ticket);

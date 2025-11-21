@@ -14,6 +14,7 @@ import com.flight.request.TicketBookingRequest;
 import com.flight.service.TicketService;
 
 import jakarta.validation.Valid;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class TicketController {
@@ -22,14 +23,14 @@ public class TicketController {
 	TicketService ticketService;
 
 	@PostMapping("/api/v1.0/flight/booking/{f_id}")
-	public ResponseEntity<String> bookTicket(@PathVariable int f_id, @Valid @RequestBody TicketBookingRequest req)
+	public Mono<ResponseEntity<String>> bookTicket(@PathVariable int f_id, @Valid @RequestBody TicketBookingRequest req)
 			throws ResourceNotFoundExceptionForResponseEntity {
 		return ticketService.bookTicketService(f_id, req);
 
 	}
 
 	@GetMapping("/api/v1.0/flight/ticket/{pnr}")
-	public ResponseEntity<Ticket> getDetails(@PathVariable String pnr)
+	public Mono<ResponseEntity<Ticket>> getDetails(@PathVariable String pnr)
 			throws ResourceNotFoundExceptionForResponseEntity {
 		return ticketService.getServiceDetails(pnr);
 	}

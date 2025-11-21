@@ -1,18 +1,20 @@
 package com.flight.repository;
 
-import java.util.List;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 import com.flight.entity.Flight;
 
-public interface FlightRepository extends CrudRepository<Flight, Integer> {
-	List<Flight> findByOrigin(String origin);
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-	List<Flight> findByDestination(String destination);
+public interface FlightRepository extends ReactiveCrudRepository<Flight, Integer> {
+	Flux<Flight> findByOrigin(String origin);
 
-	List<Flight> findByOriginAndDestination(String origin, String destination);
+	Flux<Flight> findByDestination(String destination);
 
-	List<Flight> findByflightId(int flightId);
+	Flux<Flight> findByOriginAndDestination(String origin, String destination);
+
+	Mono<Flight> findByflightId(int flightId);
 
 }

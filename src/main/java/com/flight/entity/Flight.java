@@ -1,41 +1,44 @@
 package com.flight.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.Column;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-@Entity
+@Table("flight")
 public class Flight {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int flightId;
-	private Airline airline;
-	@NotBlank
-	private String origin;
 
-	public int getFlightId() {
+    @Id
+    @Column("flight_id")
+    private Integer flightId;
+
+    @NotBlank
+    private String airline;
+
+    @NotBlank
+    private String origin;
+
+    @NotBlank
+    private String destination;
+
+    public Integer getFlightId() {
 		return flightId;
 	}
 
-	public void setFlightId(int flightId) {
+	public void setFlightId(Integer flightId) {
 		this.flightId = flightId;
 	}
 
-	public Airline getAirline() {
+	public String getAirline() {
 		return airline;
 	}
 
-	public void setAirline(Airline airline) {
+	public void setAirline(String airline) {
 		this.airline = airline;
 	}
 
@@ -55,11 +58,11 @@ public class Flight {
 		this.destination = destination;
 	}
 
-	public double getPrice() {
+	public Double getPrice() {
 		return price;
 	}
 
-	public void setPrice(double price) {
+	public void setPrice(Double price) {
 		this.price = price;
 	}
 
@@ -79,24 +82,17 @@ public class Flight {
 		this.arrivalTime = arrivalTime;
 	}
 
-	public List<Ticket> getTickets() {
-		return tickets;
-	}
-
-	public void setTickets(List<Ticket> tickets) {
-		this.tickets = tickets;
-	}
-
-	@NotBlank
-	private String destination;
 	@Min(0)
-	private double price;
-	@NotNull
-	private LocalDateTime departureTime;
-	@NotNull
-	private LocalDateTime arrivalTime;
-	@OneToMany(mappedBy = "flight")
-	@JsonIgnore
-	private List<Ticket> tickets;
+    private Double price;
 
+    @NotNull
+    @Column("departure_time")
+    private LocalDateTime departureTime;
+
+    @NotNull
+    @Column("arrival_time")
+    private LocalDateTime arrivalTime;
+
+    // Tickets are fetched manually using TicketRepository
+    // No @OneToMany here
 }

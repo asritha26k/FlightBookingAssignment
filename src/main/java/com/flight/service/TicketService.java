@@ -18,6 +18,8 @@ import com.flight.repository.PassengerRepository;
 import com.flight.repository.TicketRepository;
 import com.flight.request.TicketBookingRequest;
 
+import reactor.core.publisher.Mono;
+
 @Service
 public class TicketService {
 	@Autowired
@@ -29,53 +31,61 @@ public class TicketService {
 	@Autowired
 	FlightRepository flightRepo;
 
-	public ResponseEntity<String> bookTicketService(int flight_id, TicketBookingRequest req)
-			throws ResourceNotFoundExceptionForResponseEntity {
-		Passenger passenger = passRepo.findById(req.passenger_id)
-				.orElseThrow(() -> new ResourceNotFoundExceptionForResponseEntity(
-						"Passenger with id " + req.passenger_id + " not found"));
+	public Mono<ResponseEntity<String>> bookTicketService(int flight_id, TicketBookingRequest req) 
+	        throws ResourceNotFoundExceptionForResponseEntity {
+	    return passRepo.findById(req.passenger_id)
+	            .switchIfEmpty(Mono.error(new ResourceNotFoundExceptionForResponseEntity(
+	                    "Passenger with id " + req.passenger_id + " not found")))
+	            .flatMap(passenger ->
+	                flightRepo.findById(flight_id)
+	                          .switchIfEmpty(Mono.error(new ResourceNotFoundExceptionForResponseEntity(
+	                                  "Flight with id " + flight_id + " not found")))
+	                          .flatMap(flight -> {
+	                              // create ticket
+	                              Ticket newTicket = new Ticket();
+	                              newTicket.setFlightId(flight.getFlightId()); // FK only
+	                              newTicket.setPassengerId(passenger.getPassengerId()); // FK only
+	                              newTicket.setSeatNo(req.seatNo);
+	                              newTicket.setStatus(Status.Booked);
 
-		Flight flight = flightRepo.findById(flight_id).orElseThrow(
-				() -> new ResourceNotFoundExceptionForResponseEntity("Flight with id " + flight_id + " not found"));
+	                              String pnr = UUID.randomUUID().toString().substring(0, 8);
+	                              newTicket.setPnr(pnr);
 
-		Ticket newTicket = new Ticket();
-		newTicket.setFlight(flight);
-		newTicket.setPassenger(passenger);
-		newTicket.setSeatNo(req.seatNo);
-		newTicket.setStatus(Status.Booked);
-
-		String pnr = UUID.randomUUID().toString().substring(0, 8);
-		newTicket.setPnr(pnr);
-
-		if (passenger.getTicket() == null) {
-			passenger.setTicket(new ArrayList<>());
-		}
-
-		passenger.getTicket().add(newTicket);
-		ticketRepo.save(newTicket);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(pnr);
+	                              // save ticket reactively
+	                              return ticketRepo.save(newTicket)
+	                                               .map(saved -> ResponseEntity.status(HttpStatus.CREATED)
+	                                                                           .body(pnr));
+	                          })
+	            );
 	}
 
-	public ResponseEntity<Ticket> getServiceDetails(String pnr) throws ResourceNotFoundExceptionForResponseEntity {
 
-		Ticket ticket = ticketRepo.findByPnr(pnr)
-				.orElseThrow(() -> new ResourceNotFoundExceptionForResponseEntity(pnr + " this pnr details not found"));
 
-		return ResponseEntity.ok(ticket);
+	public Mono<ResponseEntity<Ticket>> getServiceDetails(String pnr) throws ResourceNotFoundExceptionForResponseEntity {
+
+		
+		return ticketRepo.findByPnr(pnr).switchIfEmpty(
+				
+				Mono.error(new ResourceNotFoundExceptionForResponseEntity(pnr + " this pnr details not found"))
+).map(ticket-> ResponseEntity.ok(ticket));
 	}
 
-	public ResponseEntity<String> getDelete(String pnr) throws ResourceNotFoundExceptionForResponseEntity {
-		Ticket ticket = ticketRepo.findByPnr(pnr)
-				.orElseThrow(() -> new ResourceNotFoundExceptionForResponseEntity(pnr + "this pnr details not found"));
-		;
-
-		Passenger passenger = ticket.getPassenger();
-		if (passenger.getTicket() != null) {
-			passenger.getTicket().remove(ticket);
-		}
-		ticketRepo.delete(ticket);
-		return ResponseEntity.status(HttpStatus.OK).body("Deleted " + pnr);
-
+	public Mono<ResponseEntity<Void>> getDelete(String pnr) throws ResourceNotFoundExceptionForResponseEntity {
+	    return ticketRepo.findByPnr(pnr)
+	            .switchIfEmpty(Mono.error(new ResourceNotFoundExceptionForResponseEntity(
+	                    pnr + " this pnr details not found")))
+	            .flatMap(ticket ->
+	                ticketRepo.delete(ticket)  // delete returns Mono<Void>
+	                          .then(Mono.just(ResponseEntity.ok().build()))
+	            );
 	}
+
 }
+
+
+
+
+
+
+
+

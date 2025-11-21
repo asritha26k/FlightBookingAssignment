@@ -1,16 +1,17 @@
 package com.flight.repository;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 import com.flight.entity.Ticket;
 
-public interface TicketRepository extends CrudRepository<Ticket, Integer> {
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-	Optional<Ticket> findByPnr(String pnr);
+public interface TicketRepository extends ReactiveCrudRepository<Ticket, Integer> {
 
-	List<Ticket> findAllByPassenger_PassengerId(int passengerId);
+	Mono<Ticket> findByPnr(String pnr);
+
+	Flux<Ticket> findAllByPassengerId(Integer passengerId);
+    
 
 }

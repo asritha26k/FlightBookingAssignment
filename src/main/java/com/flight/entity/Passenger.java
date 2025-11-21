@@ -1,91 +1,44 @@
 package com.flight.entity;
 
-import java.util.List;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-@Entity
+@Table("passenger")
 public class Passenger {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int passengerId;
 
-	@NotBlank
-	private String name;
+    @Id
+    @Column("passenger_id")
+    private Integer passengerId;
 
-	@NotNull
-	@Positive
-	private Long phoneNo;
+    @NotBlank
+    private String name;
 
-	@NotBlank
-	@Email
-	private String emailId;
+    @NotNull
+    @Positive
+    @Column("phone_no")
+    private Long phoneNo;
 
-	@OneToOne(mappedBy = "passenger", cascade = CascadeType.ALL)
-	@JsonBackReference
-	private Address address;
+    @NotBlank
+    @Email
+    @Column("email_id")
+    private String emailId;
 
-	@OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL)
-	@JsonBackReference
-	private List<Ticket> tickets;
+    // Getters & Setters
+    public Integer getPassengerId() { return passengerId; }
+    public void setPassengerId(Integer passengerId) { this.passengerId = passengerId; }
 
-	public int getPassengerId() {
-		return passengerId;
-	}
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-	public void setPassengerId(int passengerId) {
-		this.passengerId = passengerId;
-	}
+    public Long getPhoneNo() { return phoneNo; }
+    public void setPhoneNo(Long phoneNo) { this.phoneNo = phoneNo; }
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Long getPhoneNo() {
-		return phoneNo;
-	}
-
-	public void setPhoneNo(Long phoneNum) {
-		this.phoneNo = phoneNum;
-	}
-
-	public String getEmailId() {
-		return emailId;
-	}
-
-	public void setEmailId(String emailId) {
-		this.emailId = emailId;
-	}
-
-	public Address getAddress() {
-		return address;
-	}
-
-	public void setAddress(Address address) {
-		this.address = address;
-	}
-
-	public List<Ticket> getTicket() {
-		return tickets;
-	}
-
-	public void setTicket(List<Ticket> ticket) {
-		this.tickets = ticket;
-	}
+    public String getEmailId() { return emailId; }
+    public void setEmailId(String emailId) { this.emailId = emailId; }
 }

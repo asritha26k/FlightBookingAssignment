@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.flight.entity.Address;
@@ -74,12 +75,9 @@ public class PassengerServiceTest {
 
 		when(passRepo.save(any(Passenger.class))).thenReturn(passenger);
 
-		ResponseEntity<Passenger> savedPassenger = passengerService.add(req);
+		ResponseEntity<Integer> savedPassenger = passengerService.add(req);
 
-		assertEquals(req.name, savedPassenger.getBody().getName());
-		assertEquals(req.emailId, savedPassenger.getBody().getEmailId());
-		assertEquals(req.city, savedPassenger.getBody().getAddress().getCity());
-
+		assertEquals(savedPassenger.getStatusCode(), HttpStatus.CREATED);
 		verify(passRepo, times(1)).save(any(Passenger.class));
 	}
 

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -12,43 +13,53 @@ import com.flight.exception.ResourceNotFoundExceptionForResponseEntity;
 import com.flight.repository.FlightRepository;
 import com.flight.request.SearchReq;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 @Service
 public class FlightService {
 	@Autowired
 	FlightRepository flightRepo;
 
-	public ResponseEntity<Flight> addService(Flight flight) {
+	public Mono<ResponseEntity<Integer>> addService(Flight flight) {
 
-		Flight savedFlight = flightRepo.save(flight);
-		return ResponseEntity.status(HttpStatus.CREATED).body(savedFlight);
+		Mono<Flight> savedFlight = flightRepo.save(flight);
+		return savedFlight.map(f->ResponseEntity.status(HttpStatus.CREATED).body(f.getFlightId()));
+		
 	}
 
-	public ResponseEntity<List<Flight>> searchService(SearchReq searchReq)
-			throws ResourceNotFoundExceptionForResponseEntity {
-		String from = searchReq.origin;
-		String to = searchReq.destination;
+	public Mono<ResponseEntity<List<Flight>>> searchService(SearchReq searchReq) throws ResourceNotFoundExceptionForResponseEntity {
+	    String from = searchReq.origin;
+	    String to = searchReq.destination;
 
-		// no optional because default return value is list only, if ntg to return then
-		// empty list
-		// so optional becomes redundant anyways
-		List<Flight> flights = flightRepo.findByOriginAndDestination(from, to);
-
-		if (flights.isEmpty()) {
-			throw new ResourceNotFoundExceptionForResponseEntity("No flights found from " + from + " to " + to);
-		}
-
-		return ResponseEntity.status(HttpStatus.OK).body(flights);
+	    return flightRepo.findByOriginAndDestination(from, to) // Flux<Flight>
+	                     .collectList()                        // Mono<List<Flight>>
+	                     .flatMap(list -> {
+	                         if (list.isEmpty()) {
+	                             return Mono.error(new ResourceNotFoundExceptionForResponseEntity(
+	                                 "No flights found from " + from + " to " + to
+	                             ));
+	                         }
+//	                         .flatMap(list -> ...) → lets you check if (list.isEmpty()) before returning a ResponseEntity.
+	                         return Mono.just(ResponseEntity.ok(list));
+	                     });
 	}
 
-	public ResponseEntity<String> deleteFlightService(int flightId) throws ResourceNotFoundExceptionForResponseEntity {
-		Flight flight = flightRepo.findById(flightId).orElseThrow(
-				() -> new ResourceNotFoundExceptionForResponseEntity("Flight with id " + flightId + " not found"));
-
-		flightRepo.delete(flight);
-		return ResponseEntity.status(HttpStatus.OK).body("Flight with id " + flightId + " deleted successfully");
+	public Mono<ResponseEntity<Void>> deleteFlightService(int flightId) throws ResourceNotFoundExceptionForResponseEntity {
+	    return flightRepo.findById(flightId)
+	                     .switchIfEmpty(Mono.error(
+	                         new ResourceNotFoundExceptionForResponseEntity(
+	                             "Flight with ID " + flightId + " not found"
+	                         )
+	                     ))
+	                     .flatMap(flight -> flightRepo.delete(flight)  // delete returns Mono<Void>
+	                                               .then(Mono.just(ResponseEntity.ok().build()))
+	                     );
 	}
 
-	public List<Flight> getByFlightId(int flightId) {
+
+
+	public Mono<Flight> getByFlightId(int flightId) {
 		return flightRepo.findByflightId(flightId);
 
 	}

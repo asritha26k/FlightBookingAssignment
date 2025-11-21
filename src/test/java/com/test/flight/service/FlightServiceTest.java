@@ -1,6 +1,7 @@
 package com.test.flight.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.flight.entity.Airline;
@@ -42,8 +44,8 @@ class FlightServiceTest {
 		input.setOrigin("india");
 		input.setDestination("pakistan");
 		when(flightRepo.save(input)).thenReturn(input);
-		ResponseEntity<Flight> output = flightService.addService(input);
-		assertEquals(input, output.getBody());
+		ResponseEntity<Integer> output = flightService.addService(input);
+		assertEquals(output.getStatusCode(), HttpStatus.CREATED);
 		verify(flightRepo, times(1)).save(input);
 	}
 
@@ -86,17 +88,18 @@ class FlightServiceTest {
 
 	@Test
 	public void Deletion() throws ResourceNotFoundException {
-		Flight input = new Flight();
-		input.setAirline(Airline.Emirates);
-		input.setFlightId(1);
-		input.setOrigin("india");
-		input.setDestination("pakistan");
-
-		when(flightRepo.findById(1)).thenReturn(Optional.of(input));
-		assertEquals(flightService.deleteFlightService(1).getBody(), "Flight with id " + 1 + " deleted successfully");
-		verify(flightRepo, times(1)).delete(input);
-
+	    Flight input = new Flight();
+	    input.setAirline(Airline.Emirates);
+	    input.setFlightId(1);
+	    input.setOrigin("india");
+	    input.setDestination("pakistan");
+	    when(flightRepo.findById(1)).thenReturn(Optional.of(input));
+	    ResponseEntity<Void> response = flightService.deleteFlightService(1);
+	    assertEquals(HttpStatus.OK, response.getStatusCode());
+	    assertNull(response.getBody());
+	    verify(flightRepo, times(1)).delete(input);
 	}
+
 
 	@Test
 	public void DeletionFailed() throws ResourceNotFoundExceptionForResponseEntity {

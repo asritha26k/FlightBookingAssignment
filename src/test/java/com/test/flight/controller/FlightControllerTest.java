@@ -3,6 +3,7 @@ package com.test.flight.controller;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,20 +71,22 @@ class FlightControllerTest {
 	}
 
 	@Test
-	public void addControllerTest() throws JsonProcessingException, Exception {
-		Flight request = createFlight();
-		request.setFlightId(0);
-		Flight saved = createFlight();
-		when(flightService.addService(Mockito.any(Flight.class)))
-				.thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(saved));
+	public void addControllerTest() throws Exception {
+	    Flight request = createFlight();
+	    request.setFlightId(0);
+	    Flight saved = createFlight(); // saved.getFlightId() = 1
 
-		mockMvc.perform(post("/api/v1.0/flight/airline/inventory/add").contentType(MediaType.APPLICATION_JSON)
-				.content(mapper.writeValueAsString(request))).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.flightId").value(1)).andExpect(jsonPath("$.origin").value("India"));
-		// post,contentType,content one set
-		// each andExpect is one set which contains json path and value check brackets!
+	    when(flightService.addService(Mockito.any(Flight.class)))
+	        .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(saved.getFlightId()));
 
+	    mockMvc.perform(post("/api/v1.0/flight/airline/inventory/add")
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .content(mapper.writeValueAsString(request)))
+	        .andExpect(status().isCreated())
+	        .andExpect(content().string("1"));  // raw integer as string
 	}
+
+
 
 	@Test
 	public void searchControllerTest() throws JsonProcessingException, Exception {
@@ -104,12 +107,13 @@ class FlightControllerTest {
 	@Test
 	public void deleteFlightControllerTest() throws Exception {
 
-		when(flightService.deleteFlightService(1))
-				.thenReturn(ResponseEntity.status(HttpStatus.OK).body("Flight with id " + 1 + " deleted successfully"));
+	    when(flightService.deleteFlightService(1))
+	            .thenReturn(ResponseEntity.ok().build());
 
-		mockMvc.perform(delete("/api/v1.0/flight/airline/inventory/delete/{flightId}", 1)
-				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-				.andExpect(jsonPath("$").value("Flight with id 1 deleted successfully"));
+	    mockMvc.perform(delete("/api/v1.0/flight/airline/inventory/delete/{flightId}", 1)
+	            .contentType(MediaType.APPLICATION_JSON))
+	            .andExpect(status().isOk())
+	            .andExpect(content().string("")); // EXPECT EMPTY BODY
 	}
 
 }

@@ -65,9 +65,9 @@ class PassengerControllerTest {
 	@Test
 	void cancelBooking_Success() throws Exception {
 		Mockito.when(ticketService.getDelete("PNR123"))
-				.thenReturn(ResponseEntity.status(HttpStatus.OK).body("Deleted " + "PNR123"));
+				.thenReturn(ResponseEntity.status(HttpStatus.OK).build());
 
 		mockMvc.perform(delete("/api/v1.0/flight/booking/cancel/PNR123")).andExpect(status().isOk())
-				.andExpect(content().string("Deleted PNR123"));
+		.andExpect(content().string(""));
 	}
 }

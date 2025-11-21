@@ -1,81 +1,42 @@
 package com.flight.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
-@Entity
+@Table("address")
 public class Address {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int address_id;
 
-	public int getAddress_id() {
-		return address_id;
-	}
+    @Id
+    @Column("address_id")
+    private Integer addressId;
 
-	public void setAddress_id(int address_id) {
-		this.address_id = address_id;
-	}
+    @Column("house_no")
+    private Integer houseNo;
 
-	@NotNull
-	private int houseNo;
-	@NotBlank
-	private String city;
-	@NotBlank
-	private String state;
+    private String city;
+    private String state;
+    private String country;
 
-	public int getHouseNo() {
-		return houseNo;
-	}
+    @Column("pass_id")
+    private Integer passengerId; // FK to passenger
 
-	public void setHouseNo(int houseNo2) {
-		this.houseNo = houseNo2;
-	}
+    // Getters & Setters
+    public Integer getAddressId() { return addressId; }
+    public void setAddressId(Integer addressId) { this.addressId = addressId; }
 
-	public String getCity() {
-		return city;
-	}
+    public Integer getHouseNo() { return houseNo; }
+    public void setHouseNo(Integer houseNo) { this.houseNo = houseNo; }
 
-	public void setCity(String city) {
-		this.city = city;
-	}
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
 
-	public String getState() {
-		return state;
-	}
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
 
-	public void setState(String state) {
-		this.state = state;
-	}
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
 
-	public String getCountry() {
-		return country;
-	}
-
-	public void setCountry(String country) {
-		this.country = country;
-	}
-
-	public Passenger getPassenger() {
-		return passenger;
-	}
-
-	public void setPassenger(Passenger passenger) {
-		this.passenger = passenger;
-	}
-
-	@NotBlank
-	private String country;
-	@OneToOne
-	@JoinColumn(name = "pass_id")
-	@JsonIgnore
-	private Passenger passenger;
+    public Integer getPassengerId() { return passengerId; }
+    public void setPassengerId(Integer passengerId) { this.passengerId = passengerId; }
 }

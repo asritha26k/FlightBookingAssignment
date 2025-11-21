@@ -1,104 +1,95 @@
 package com.flight.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.Column;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-@Entity
+@Table("ticket")
 public class Ticket {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int ticketId;
+    @Id
+    @Column("ticket_id")
+    private Integer ticketId;
 
-	@NotBlank
-	private String pnr;
+    @NotBlank
+    private String pnr;
 
-	@NotBlank
-	private String seatNo;
+    @NotBlank
+    @Column("seat_no")
+    private String seatNo;
 
-	@NotNull
-	private Status status;
+    @NotNull
+    private Status status;
 
-	@ManyToOne
-	@JoinColumn(name = "flight_id")
-	@JsonIgnore
-	private Flight flight;
+    @Column("flight_id")
+    private Integer flightId;
 
-	@ManyToOne
-	@JoinColumn(name = "passenger_id")
-	@JsonIgnore
-	private Passenger passenger;
+    @Column("passenger_id")
+    private Integer passengerId;
 
-	// Getters and Setters
-	public int getTicketId() {
-		return ticketId;
-	}
+    public Integer getTicketId() {
+        return ticketId;
+    }
 
-	public void setTicketId(int ticketId) {
-		this.ticketId = ticketId;
-	}
+    public void setTicketId(Integer ticketId) {
+        this.ticketId = ticketId;
+    }
 
-	public String getPnr() {
-		return pnr;
-	}
+    public String getPnr() {
+        return pnr;
+    }
 
-	public void setPnr(String pnr) {
-		this.pnr = pnr;
-	}
+    public void setPnr(String pnr) {
+        this.pnr = pnr;
+    }
 
-	public String getSeatNo() {
-		return seatNo;
-	}
+    public String getSeatNo() {
+        return seatNo;
+    }
 
-	public void setSeatNo(String seatNo) {
-		this.seatNo = seatNo;
-	}
+    public void setSeatNo(String seatNo) {
+        this.seatNo = seatNo;
+    }
 
-	public Status getStatus() {
-		return status;
-	}
+    public Status getStatus() {
+        return status;
+    }
 
-	public void setStatus(Status status) {
-		this.status = status;
-	}
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 
-	public Flight getFlight() {
-		return flight;
-	}
+    public Integer getFlightId() {
+        return flightId;
+    }
 
-	public void setFlight(Flight flight) {
-		this.flight = flight;
-	}
+    public void setFlightId(Integer flightId) {
+        this.flightId = flightId;
+    }
 
-	public Passenger getPassenger() {
-		return passenger;
-	}
+    public Integer getPassengerId() {
+        return passengerId;
+    }
 
-	public void setPassenger(Passenger passenger) {
-		this.passenger = passenger;
-	}
+    public void setPassengerId(Integer passengerId) {
+        this.passengerId = passengerId;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (!(o instanceof Ticket))
-			return false;
-		Ticket ticket = (Ticket) o;
-		return pnr != null && pnr.equals(ticket.getPnr());
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Ticket))
+            return false;
+        Ticket ticket = (Ticket) o;
+        return pnr != null && pnr.equals(ticket.getPnr());
+    }
 
-	@Override
-	public int hashCode() {
-		return pnr != null ? pnr.hashCode() : 0;
-	}
-
+    @Override
+    public int hashCode() {
+        return pnr != null ? pnr.hashCode() : 0;
+    }
 }

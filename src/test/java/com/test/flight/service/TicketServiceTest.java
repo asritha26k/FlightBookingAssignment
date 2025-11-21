@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.flight.entity.Flight;
@@ -138,9 +139,9 @@ class TicketServiceTest {
 
 		when(ticketRepo.findByPnr("PNR12345")).thenReturn(Optional.of(ticket));
 
-		ResponseEntity<String> result = ticketService.getDelete("PNR12345");
+		ResponseEntity<Void> result = ticketService.getDelete("PNR12345");
 
-		assertEquals("Deleted PNR12345", result.getBody());
+		assertEquals(HttpStatus.OK, result.getStatusCode());
 		assertTrue(localPassenger.getTicket().isEmpty());
 		verify(ticketRepo, times(1)).delete(ticket);
 

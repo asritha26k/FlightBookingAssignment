@@ -1,11 +1,13 @@
 package com.flight.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 import com.flight.entity.Passenger;
 
-public interface PassengerRepository extends CrudRepository<Passenger, Integer> {
+import reactor.core.publisher.Mono;
 
-	Passenger findByEmailId(String emailId);
+public interface PassengerRepository extends ReactiveCrudRepository<Passenger, Integer> {
+
+	Mono<Passenger> findByEmailId(String emailId);
 
 }

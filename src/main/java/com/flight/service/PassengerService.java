@@ -16,6 +16,9 @@ import com.flight.repository.PassengerRepository;
 import com.flight.repository.TicketRepository;
 import com.flight.request.PassengerRequest;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 @Service
 public class PassengerService {
 	@Autowired
@@ -27,33 +30,42 @@ public class PassengerService {
 	@Autowired
 	TicketRepository tickRepo;
 
-	public ResponseEntity<Passenger> add(PassengerRequest req) {
-		Passenger newPassenger = new Passenger();
-		newPassenger.setName(req.name);
-		newPassenger.setPhoneNo(req.phoneNum);
-		newPassenger.setEmailId(req.emailId);
+	public Mono<ResponseEntity<Integer>> add(PassengerRequest req) {
+	    Passenger newPassenger = new Passenger();
+	    newPassenger.setName(req.name);
+	    newPassenger.setPhoneNo(req.phoneNum);
+	    newPassenger.setEmailId(req.emailId);
 
-		Address newAddress = new Address();
-		newAddress.setCity(req.city);
-		newAddress.setHouseNo(req.houseNo);
-		newAddress.setCountry(req.country);
-		newAddress.setState(req.state);
+	    // First, save passenger
+	    return passRepo.save(newPassenger)
+	            .flatMap(savedPassenger -> {
+	                Address newAddress = new Address();
+	                newAddress.setCity(req.city);
+	                newAddress.setHouseNo(req.houseNo);
+	                newAddress.setCountry(req.country);
+	                newAddress.setState(req.state);
 
-		newAddress.setPassenger(newPassenger);
-		newPassenger.setAddress(newAddress);
+	                // Set foreign key manually
+	                newAddress.setPassengerId(savedPassenger.getPassengerId());
 
-		return ResponseEntity.status(HttpStatus.CREATED).body(passRepo.save(newPassenger));
-
+	                return addRepo.save(newAddress)
+	                        .map(savedAddress -> ResponseEntity.status(HttpStatus.CREATED)
+	                                .body(savedPassenger.getPassengerId()));
+	            });
 	}
 
-	public ResponseEntity<List<Ticket>> getTickets(String emailId) throws ResourceNotFoundExceptionForResponseEntity {
-		Passenger p = passRepo.findByEmailId(emailId);
-
-		if (p == null) {
-			throw new ResourceNotFoundExceptionForResponseEntity("Passenger with email " + emailId + " not found");
-		}
-
-		return ResponseEntity.status(HttpStatus.OK).body(tickRepo.findAllByPassenger_PassengerId(p.getPassengerId()));
+	public Mono<ResponseEntity<List<Ticket>>> getTickets(String emailId) {
+	    return passRepo.findByEmailId(emailId)  // Mono<Passenger>
+	                   .switchIfEmpty(Mono.error(
+	                       new ResourceNotFoundExceptionForResponseEntity(
+	                           "Passenger with " + emailId + " not found"
+	                       )
+	                   ))
+	                   .flatMap(passenger -> 
+	                       tickRepo.findAllByPassengerId(passenger.getPassengerId())  // Flux<Ticket>
+	                               .collectList()  // Mono<List<Ticket>>
+	                               .map(tickets -> ResponseEntity.ok(tickets)) // Mono<ResponseEntity<List<Ticket>>>
+	                   );
 	}
 
 }

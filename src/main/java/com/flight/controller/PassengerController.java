@@ -19,6 +19,7 @@ import com.flight.service.PassengerService;
 import com.flight.service.TicketService;
 
 import jakarta.validation.Valid;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class PassengerController {
@@ -30,19 +31,19 @@ public class PassengerController {
 
 	// registered the passenger
 	@PostMapping("/api/v1.0/flight/register/passenger")
-	public ResponseEntity<Passenger> addPassenger(@Valid @RequestBody PassengerRequest req) {
+	public Mono<ResponseEntity<Integer>> addPassenger(@Valid @RequestBody PassengerRequest req) {
 		return passengerService.add(req);
 
 	}
 
 	@GetMapping("/api/v1.0/flight/booking/history/{emailId}")
-	public ResponseEntity<List<Ticket>> getTickets(@PathVariable String emailId)
+	public Mono<ResponseEntity<List<Ticket>>> getTickets(@PathVariable String emailId)
 			throws ResourceNotFoundExceptionForResponseEntity {
 		return passengerService.getTickets(emailId);
 	}
 
 	@DeleteMapping("/api/v1.0/flight/booking/cancel/{pnr}")
-	public ResponseEntity<String> getDeleted(@PathVariable String pnr)
+	public Mono<ResponseEntity<Void>> getDeleted(@PathVariable String pnr)
 			throws ResourceNotFoundExceptionForResponseEntity {
 		return tickService.getDelete(pnr);
 	}

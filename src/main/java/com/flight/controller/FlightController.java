@@ -16,6 +16,7 @@ import com.flight.request.SearchReq;
 import com.flight.service.FlightService;
 
 import jakarta.validation.Valid;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class FlightController {
@@ -25,19 +26,19 @@ public class FlightController {
 
 	// flight added
 	@PostMapping("/api/v1.0/flight/airline/inventory/add")
-	public ResponseEntity<Flight> addController(@Valid @RequestBody Flight flight) {
+	public Mono<ResponseEntity<Integer>> addController(@Valid @RequestBody Flight flight) {
 		return flightService.addService(flight);
 	}
 
 	@PostMapping("/api/v1.0/flight/search")
-	public ResponseEntity<List<Flight>> searchController(@Valid @RequestBody SearchReq searchReq)
+	public Mono<ResponseEntity<List<Flight>>> searchController(@Valid @RequestBody SearchReq searchReq)
 			throws ResourceNotFoundExceptionForResponseEntity {
 
 		return flightService.searchService(searchReq);
 	}
 
 	@DeleteMapping("/api/v1.0/flight/airline/inventory/delete/{flightId}")
-	public ResponseEntity<String> deleteFlightController(@PathVariable int flightId)
+	public Mono<ResponseEntity<Void>> deleteFlightController(@PathVariable int flightId)
 			throws ResourceNotFoundExceptionForResponseEntity {
 //		if (flightService.getByFlightId(flightId).size() == 0) {
 //			throw new ResourceNotFoundExceptionForResponseEntity("that flight id doesnt exist");
